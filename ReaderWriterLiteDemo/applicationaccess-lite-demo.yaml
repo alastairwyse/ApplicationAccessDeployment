@@ -22,11 +22,8 @@ spec:
           value: "h8en9s8N"
         resources:
           requests:
-            cpu: 10m
-            memory: 128Mi
-          limits:
             cpu: 250m
-            memory: 256Mi
+            memory: 250Mi
 
 ---
 apiVersion: v1
@@ -72,11 +69,8 @@ spec:
           value: "H4sIAAAAAAACA4yTUU/CMBDH3034DmTPmEyNifqmqJEEFB3G52M7RmPXjmuLTsJ3t90UCh3RPS253/2v97+7Veeoa7/oOk1RqREIyJGSBb8FDVNQ2JdCYKqZFNFVd9XAdcIvMKlKtKFoLJXOCZPnYdTzsG3+GAgK1EhqV6nGHmy2UykbFbXgxwppyVL01XYKOxzKkrMUnDzUDQT0q5URtq4vHkBjUOpDUuag+QWKS3XxGEB9WRQgsgkrUBr32HgLrJvf9U9OdLdEoW/MbIZ0z42aM5Hv2dcEE/aFQ1YwJ3ce+77VaUMpy4Gwli2BW+Istt9epRFqYulQ5nlYYyd2J2DK0bU4A66wF3B90JhLqhL7MvbprIhCqHn2mKQzO6jodbZFEk1OuXKKm34xc73Z6Jukd6TJnBCyh2pKLNvJlxTMIXTuNI6DJcGFQYNPJVK9HW1O9v54+D0wbgivf7c/ekFtSCTNXr4KWFrAmRp5ixBapv5xTa0XZfNcLaSWVfzPUW1EE2koxf2JbpCBYJoBt/MHLvODmLukQXYw7N9QK2Ddo6ovjXAjO4kPIt6YTlupzVBbT9E7R/8yO0frbwAAAP//"
         resources:
           requests:
-            cpu: 10m
-            memory: 128Mi
-          limits:
-            cpu: 250m
-            memory: 256Mi
+            cpu: 500m
+            memory: 120Mi
       initContainers:
       - name: wait-for-postgresql
         image: alpine:latest
@@ -86,11 +80,8 @@ spec:
           value: "h8en9s8N"
         resources:
           requests:
-            cpu: 1m
-            memory: 50Mi
-          limits:
-            cpu: 75m
-            memory: 128Mi
+            cpu: 250m
+            memory: 250Mi
 
 ---
 apiVersion: v1
