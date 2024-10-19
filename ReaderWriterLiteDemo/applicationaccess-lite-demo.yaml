@@ -1,3 +1,4 @@
+# Postgresql pod
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +27,7 @@ spec:
             memory: 250Mi
 
 ---
+# Expose Postgresql on port 5432
 apiVersion: v1
 kind: Service
 metadata:
@@ -39,6 +41,7 @@ spec:
   type: ClusterIP  
 
 ---  
+# ApplicationAccess pod
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -71,8 +74,9 @@ spec:
           requests:
             cpu: 500m
             memory: 120Mi
+      # InitContainer to create the ApplicationAccess database and objects in Postgresql
       initContainers:
-      - name: wait-for-postgresql
+      - name: postgresql-database-creation
         image: alpine:latest
         command: ['sh', '-c', 'until nc -zv postgresql-service 5432; do echo waiting for postgresql; sleep 2; done; apk --update add bash; apk --update add curl; curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccessDeployment/refs/heads/master/InitializePostreSqlDatabase/InitializePostreSqlDatabase.sh; chmod 0777 InitializePostreSqlDatabase.sh; ./InitializePostreSqlDatabase.sh postgresql-service 5432 postgres; exit;']
         env:
@@ -84,6 +88,7 @@ spec:
             memory: 250Mi
 
 ---
+# Expose port 5000 publically (and route to the ApplicationAccess pod)
 apiVersion: v1
 kind: Service
 metadata:

@@ -19,7 +19,7 @@
 # ------------------------------------------------------------------------------
 #
 # Script: InitializePostreSqlDatabase.sh
-# Description: Creates the default ApplicationAccess database schema in a 
+# Description: Creates the default ApplicationAccess database and objects in a 
 #   PostreSql instance.
 #
 # Platform: Alpine Linux
@@ -60,7 +60,7 @@ apk --update add postgresql-client
 echo "Creating ApplicationAccess database..."
 psql -h $1 -p $2 -U $3 -c 'CREATE DATABASE applicationaccess'
 
-# Retrieve and run the script to create the schema
+# Retrieve and run the script to create the database objects
 echo "Creating database schema..."
 curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/6facace2d08513d190c746295b6d45140a19e670/ApplicationAccess.Persistence.Sql.PostgreSql/Resources/CreateDatabase.sql
 # Remove the top 8 lines (which create the database)
