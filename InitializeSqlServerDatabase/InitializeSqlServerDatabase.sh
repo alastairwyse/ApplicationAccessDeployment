@@ -44,9 +44,6 @@ fi
 
 # Install dependecies
 echo "installing dependecies..."
-apt-get update
-apt-get -y install curl
-apt-get -y install netcat
 curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc
 curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | tee /etc/apt/sources.list.d/mssql-release.list
 apt-get update
