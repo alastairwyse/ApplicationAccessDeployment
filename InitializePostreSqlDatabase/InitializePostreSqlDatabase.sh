@@ -53,7 +53,7 @@ then
 fi
 
 # Install psql
-echo "installing psqk..."
+echo "Installing psqk..."
 apk --update add postgresql-client
 
 # Create the database
