@@ -53,7 +53,7 @@ apt-get update
 export ACCEPT_EULA=y
 
 # Install mssql tools
-echo "installing mssql tools..."
+echo "Installing mssql tools..."
 apt-get install -y mssql-tools18 unixodbc-dev
 
 # Retrieve and run the script to create the database objects
