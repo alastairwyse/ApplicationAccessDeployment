@@ -1,0 +1,220 @@
+# SQL Server pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sqlserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver
+  template:
+    metadata:
+      labels:
+        app: sqlserver
+    spec:
+      containers:
+      - name: sqlserver
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        env:
+        - name: ACCEPT_EULA
+          value: "y"
+        - name: MSSQL_SA_PASSWORD
+          value: "h8en9s8N"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 250Mi
+            
+---
+# Expose SQL Server on port 1433
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver-service
+spec:
+  ports:
+  - port: 1433
+    targetPort: 1433
+  selector:
+    app: sqlserver
+  type: ClusterIP  
+
+---  
+# EventCache pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventcache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eventcache
+  template:
+    metadata:
+      labels:
+        app: eventcache
+    spec:
+      terminationGracePeriodSeconds: 3600
+      containers:
+      - name: eventcache
+        image: [TODO]
+        ports:
+        - containerPort: 5003
+        env:
+        - name: MODE
+          value: "Launch"
+        - name: LISTEN_PORT
+          value: "5003"
+        - name: MINIMUM_LOG_LEVEL
+          value: "Warning"
+        - name: ENCODED_JSON_CONFIGURATION
+          value: "H4sIAAAAAAACA2SSQU/CQBCF7yT+B9IzGiAxJt4USCTBSCzG89AOZeOyU2a3aCX9786W2na1vTTzzXuz87rnwXAYLU5o3AySvTJZdD88S02qvoDphVFhnJDJWB6h1cjLntGxSlaUZYEuKC8MbDWmQnegLY76LTNwmBGXcbHbqS9piaKAP0odec2UoLX9EdLxl8WOvVvpXWL1jSt1UA7TFVEu9J34A3mzZ4T0qdyySgM9cTO4NW4txO+2ZXM8FljgS44yTJHx7kvjkE+ge+k0+bR72Pio5+BgCxZnZAwmXuy3uWqdG7wpc6xXOOpYbFEO1vZ00jUwHFDm2r5JYxNTwUltMpne3YzlnXQm0rM0yinQEj5o8plGD3muVVJv1Bw4ELxZ5KX/g5GFAKzB2k/iGl0H5FVsyu7S/EO90KYBbaPdqANS4eXjX1xdPip//wbV4AcAAP//"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 120Mi
+      # InitContainer to create the ApplicationAccess database and objects in SQL Server
+      initContainers:
+      - name: sqlserver-database-creation
+        image: ubuntu:focal
+        command: ['bash', '-c', 'apt-get update; apt-get -y install netcat; until nc -zv sqlserver-service 1433; do echo waiting for sqlserver; sleep 2; done; apt-get -y install curl; curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccessDeployment/refs/heads/master/InitializeSqlServerDatabase/InitializeSqlServerDatabase.sh; chmod 0777 InitializeSqlServerDatabase.sh; ./InitializeSqlServerDatabase.sh sqlserver-service 1433 sa h8en9s8N; exit;']
+        resources:
+          requests:
+            cpu: 250m
+            memory: 250Mi
+
+---
+# Expose the Event Cache on port 5003
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventcache-service
+spec:
+  ports:
+  - port: 5003
+    targetPort: 5003
+  selector:
+    app: eventcache
+  type: ClusterIP  
+
+---  
+# Writer pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: writer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: writer
+  template:
+    metadata:
+      labels:
+        app: writer
+    spec:
+      terminationGracePeriodSeconds: 3600
+      containers:
+      - name: writer
+        image: [TODO]
+        ports:
+        - containerPort: 5002
+        env:
+        - name: MODE
+          value: "Launch"
+        - name: LISTEN_PORT
+          value: "5002"
+        - name: MINIMUM_LOG_LEVEL
+          value: "Warning"
+        - name: ENCODED_JSON_CONFIGURATION
+          value: "H4sIAAAAAAACA4xTXW/aMBR9R+I/RH6mNJQyMd4YbVUkuqGFas/GXIK1YIdrhy2r+t9nOwRsvtookiWfc4+vz/V5azaiiAwZA6VeqKApYLLJHqimc6pgJIUAprkUZBC9NRuWbOg1PCtzMAAxFQngFpC0doxD4ZQiXYMGVJVEFO0lElkgcwJqkykncGMXzqDVue92azVDHwuuOc1GpiqTqS0Z5nnGGbVHVN177FejMl44YeptT6lSfyQ6YNUH8VX1v3vwT9BYjmQhtCF04iNgLMwdtjQz2J2H/cgBXRMzvgZZ2NK4At/t8u6Y5HELQn8rlkvAp6xQKy7SgxukAhL+DyZ8za1Erz6BOPpEytw7vxub71h9RNnqZF5O4lkq7a6sdT64vQXLZpZdmz3oxfHe7As2nJjQ8xp4MRhnE5mm4cWC/UdB5xlY85fUTLsVcMxgIZVYJsYK/td2S0JC5dEUpR11cMrewAOYaLR6pXubta2wsDYa9JfE34CzFQJdPJdz5IugXqL3Js6Nxpv+A2wKKGD/CM4NqnWxzSfKswJhWA/MelygSKqpvAq6NQRrGtm9qNASdSWoXsquBvUTUT0J6337rvOl3e20+72DzEcZ3bUcFJyP6VFQbwLkUkavp/RqTndJrQPbbJj/PwAAAP//"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 120Mi
+      # InitContainer to create the ApplicationAccess database and objects in SQL Server
+      initContainers:
+      - name: wait-for-eventcache
+        image: alpine:latest
+        command: ['sh', '-c', 'until nc -zv eventcache-service 5003; do echo waiting for eventcache; sleep 2; done;']
+        resources:
+          requests:
+            cpu: 250m
+            memory: 120Mi
+
+---  
+# Reader pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reader
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: reader
+  template:
+    metadata:
+      labels:
+        app: reader
+    spec:
+      terminationGracePeriodSeconds: 3600
+      containers:
+      - name: reader
+        image: [TODO]
+        ports:
+        - containerPort: 5001
+        env:
+        - name: MODE
+          value: "Launch"
+        - name: LISTEN_PORT
+          value: "5001"
+        - name: MINIMUM_LOG_LEVEL
+          value: "Warning"
+        - name: ENCODED_JSON_CONFIGURATION
+          value: "H4sIAAAAAAACA4RTXW/aMBR9r7T/gPKc0qQpE+ON0U5FohtqqPZszCVYC3a4dtiyiv9e2/lyKGmjKJHuOff65pyc1y9Xg4E3pRSkfCKcJIDxIb0niqyJhJngHKhignuTwauhanINrooMdNnT/BjwCOj5FaNtWxIke1CA0gywaDUhFjlS2y8PqbT91+bFKPjhXRR5fs2ec6YYSWe6KRWJ6ZhmWcooMQeUm7fkFz1jvrFjSVtdEin/CrT13Rj4Nzn+2aLPoLCYiZwrjYdBtz7nevsjSTV020K/MkB7/ortQeSmMSg//mReJ6uE93AErmaE7i4L+SikshsplU1ubsCwqWHXQkxGQRA1qp6v6ZadLUcXF3iGLYLcOadXFaczDPTldD/pyYwuRJIwnjT+dcsPnKxTMMJuibbRdynaMUgEFnG+3bJ/5ku9Dv5d1wGXKIyF7hGacY7FCs20wv5w7D8s2J4p2CyEyDT6W+AfwNUOgWweizWyTadfYGt2CTQjjGBB6+s9HHLIobHXzHcUioxCft+OPwhLc4Rp7bOxJkcel2a+cHLUBCOXV/4pHTFkb+zc1PTkrqZ8Erx30bsb3oZfh1E4HI+aIZ8lrlrX5V8M3Vnsrl2gJ3EfZq4ndRV6uqqfOoD6fgMAAP//"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 120Mi
+      # InitContainer to create the ApplicationAccess database and objects in SQL Server
+      initContainers:
+      - name: wait-for-eventcache
+        image: alpine:latest
+        command: ['sh', '-c', 'until nc -zv eventcache-service 5003; do echo waiting for eventcache; sleep 2; done;']
+        resources:
+          requests:
+            cpu: 250m
+            memory: 120Mi
+
+---
+# Expose port 5001 publically (and route to the Reader pod)
+apiVersion: v1
+kind: Service
+metadata:
+  name: reader-service
+spec:
+  ports:
+  - port: 5001
+    targetPort: 5001
+  selector:
+    app: reader
+  type: LoadBalancer
+  
+---
+# Expose port 5002 publically (and route to the Writer pod)
+apiVersion: v1
+kind: Service
+metadata:
+  name: writer-service
+spec:
+  ports:
+  - port: 5002
+    targetPort: 5002
+  selector:
+    app: writer
+  type: LoadBalancer
