@@ -55,7 +55,7 @@ The docker image requires setting the following environment variables...
 | LISTEN_PORT | When MODE='Launch' | 0 - 65535 | The TCP port that ApplicationAccess should listen on |
 | MINIMUM_LOG_LEVEL | When MODE='Launch' | 'Information', 'Warning', or 'Critical' | The minimum level of logs that should be output from ApplicationAccess (TODO hyperlink to logging section) |
 | ENCODED_JSON_CONFIGURATION | When MODE='Launch' |  | Detailed JSON configuration for ApplicationAccess, having been encoded using the 'EncodeConfiguration' mode |
-| CONFIGURATION_FILE_PATH | When MODE='EncodeConfiguration' |  | Full path to the ApplicationAccess JSON configuration file.  The directory in this path should be mapped to a volume in the container host (e.g. via the -v parameter in docker). |
+| CONFIGURATION_FILE_PATH | When MODE='EncodeConfiguration' |  | Full path to the ApplicationAccess JSON configuration file.  The directory in this path should be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
 
 These variables should be set through the -e parameter if running through docker, or the 'containers > env' section of a Kubernetes manifest file.
 
@@ -152,7 +152,7 @@ ApplicationAccess can be optionally configured to, in the case of database write
 },
 ```
 
-Additionally, the directory part of this path should be mapped to a physical volume in the docker host, e.g. via the -v option in Docker, or the 'volumes' option in Kubernetes.  If using this feature in Kubernetes you need to ensure the mapped volume exists beyond the lifetime of the container instance (e.g. using [persistent volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) or similar).
+Additionally, the directory part of this path should be mapped to a physical volume in the container host, e.g. via the -v option in Docker, or the 'volumes' option in Kubernetes.  If using this feature in Kubernetes you need to ensure the mapped volume exists beyond the lifetime of the container instance (e.g. using [persistent volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) or similar).
 
 ##### Metrics
 ApplicationAccess can be optionally configured to log detailed metrics on counts of events that occurred, time taken to process operations, state of internal components, etc.  Metric logging is performed via the [ApplicationMetrics framework](https://github.com/alastairwyse/ApplicationMetrics), which can be configured to write the metrics to Microsoft SQL Server or PostgreSQL.  Metrics logging is configured via the 'MetricLogging' section of the JSON configuration.  Similarly to the processing of core events in ApplicationAccess, metrics are buffered and writen to the database periodically.  The 'MetricBufferProcessing' section of the metrics JSON configuration allows specifying the buffer size and frequency that metrics are written to the database.  For example to specify a maximum number of 500 metrics to be buffered, and writes to the database every 30 seconds the following JSON configuration should be used...
@@ -202,7 +202,7 @@ ApplicationAccess writes logging information to stdout by default.  The level of
 }
 ```
 
-Note that the 'LogFilePath' should be a path which is mapped to a volume outside the container image, similar to the 'EventPersisterBackupFilePath' configuration (TODO link to that).  Log file sizes are limited to 1GB per calendar day, and logging will stop when 1GB is reached.
+Note that the 'LogFilePath' should be a path which is mapped to a physical volume in the docker host, similar to the 'EventPersisterBackupFilePath' configuration (TODO link to that).  Log file sizes are limited to 1GB per calendar day, and logging will stop when 1GB is reached.
 
 **Note** that by default, logs written to stdout use ANSI colour codes.  To disable this, add the following section to the JSON configuration...
 
@@ -430,55 +430,55 @@ TODO: Could leave blank parts in the table to denote hierarchy... might be easie
 
 | JSON Path | Required? | Possible Values | Description |
 | --------- | --------- | --------------- | ----------- |
-| AccessManagerSqlDatabaseConnection.DatabaseType | Yes | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to |
+| AccessManagerSqlDatabaseConnection.DatabaseType | Yes | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should use |
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance | 
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.Password | Yes |  | The password to use to connect | 
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 |  |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 |  |
+| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a database operation should be retried if a transient error is encountered. |
+| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' | The name of the database to connect to within the PostgreSQL instance |  |
+| AccessManagerSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' |  | The name of the database to connect to within the PostgreSQL instance |
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
 | AccessManagerSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
-| EventBufferFlushing.BufferSizeLimit | Yes | 1 - 2147483647 | The number of events to store in the memory buffer before triggering a write to the database. | 
-| EventBufferFlushing.FlushLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the memory buffer to the database. |
-| EventPersistence.EventPersisterBackupFilePath | No |  | An optional full path to a file to use to backup the memory buffer contents, in the case of a failure to write to the database. |
+| EventBufferFlushing.BufferSizeLimit | Yes | 1 - 2147483647 | The number of events to store in the buffer before triggering a write to the database. | 
+| EventBufferFlushing.FlushLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the buffer to the database. |
+| EventPersistence.EventPersisterBackupFilePath | No |  | An optional full path to a file to use to backup the buffer contents, in the case of a failure to write to the database. |
 | MetricLogging.MetricLoggingEnabled | Yes | 'true' or 'false' | Whether to log metrics |
 | MetricLogging.MetricCategorySuffix | Yes | Blank string or suffix | An optional suffix to concatenate to the category used to log metrics under.  E.g. If multiple ApplicationAccess instances wrote metrics to the same database, this suffix could be used to differentiate the metrics for each instance.  JSON property must be specified, but value can be a blank string. |
 | MetricLogging.MetricBufferProcessing.BufferProcessingStrategy | Yes | 'SizeLimitedBufferProcessor', 'LoopingWorkerThreadBufferProcessor', or 'SizeLimitedLoopingWorkerThreadHybridBufferProcessor' | The [metrics buffer processing strategy](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy) to use |
 | MetricLogging.MetricBufferProcessing.BufferSizeLimit | Yes | 1 - 2147483647 | The number of metric events to store in the buffer before triggering a write to storage. |
 | MetricLogging.MetricBufferProcessing.DequeueOperationLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the metric buffer to storage. |
-| MetricLogging.MetricBufferProcessing.BufferProcessingFailureAction | Yes | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. because of failure to write to a database). TODO link to detailed doco |
+| MetricLogging.MetricBufferProcessing.BufferProcessingFailureAction | Yes | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. due to a failure to write to the database). TODO link to detailed doco |
 | MetricLogging.MetricsSqlDatabaseConnection.DatabaseType | Yes | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to for metric logging |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance used for metric logging | 
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Password | Yes |  | The password to use to connect | 
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 |  |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 |  |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a metrics database operation should be retried if a transient error is encountered. |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance used for metric logging |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' | The name of the database to connect to within the PostgreSQL instance |  |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
 | MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
-| Cors.AllowedOrigins | No |  | A list (JSON array of strings) of [CORS origins](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (domain, scheme, or port) which ApplicationAccess should return in the 'Access-Control-Allow-Origin' header of any HTTP responses |
-| FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a volume in the container host's file system. |
-| FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names |
-| ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether inner exceptions of the main exception are included in JSON error responses returned by ApplicationAccess. |
-| ErrorHandling.OverrideInternalServerErrors | No | 'true' or 'false' | Whether unexpected internal error messages are hidden/overridden in JSON error responses returned by ApplicationAccess.  A value of 'false' returns the error message unaltered.  A value of 'true' replaces the actual error message with a fixed error message defined in configuration parameter 'InternalServerErrorMessageOverride'. |
-| ErrorHandling.InternalServerErrorMessageOverride | No |  | When configuration parameter 'OverrideInternalServerErrors' is set true, the message to override any unexpected internal error messages with. | 
+| Cors.AllowedOrigins | No |  | A list (JSON array of strings) of [CORS origins](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (domain, scheme, port) which ApplicationAccess should return in the 'Access-Control-Allow-Origin' header of any HTTP responses |
+| FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
+| FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names.  Log files are named (or postfixed if the prefix is defined) with the day of the logs in YYYMMDD format, and have a '.log' extension. |
+| ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess. TODO link to error handling |
+| ErrorHandling.OverrideInternalServerErrors | No | 'true' or 'false' | Whether unexpected internal error messages are hidden/overridden in JSON error responses returned by ApplicationAccess.  A value of 'false' returns the error message unaltered.  A value of 'true' replaces the actual error message with a fixed error message defined in configuration parameter 'InternalServerErrorMessageOverride'. TODO link to error handling |
+| ErrorHandling.InternalServerErrorMessageOverride | No |  | When configuration parameter 'OverrideInternalServerErrors' is set true, the message to override any unexpected internal error messages with. TODO link to error handling | 
 
 #### Troubleshooting
 **'Value for parameter 'encodedJsonConfiguration' could not be decoded' when starting ApplicationAccess**
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
-More examples in the config reference... e.g. metric category prefix... what does it look like with and without?
-Think of a name of the 'zombie' mode when a critical error occurs (but not 'zombie mode')
+'OverrideInternalServerErrors' and 'InternalServerErrorMessageOverride'... do I need to include in config reference
+  TEST what happens if I leave them out of config... with both values of 'IncludeInnerExceptions'
 Maybe mark all 'required' 'Yes' values for metrics logging with a * or similar, and have a caveat/footnote at the bottom
 Maybe as 'step by step' section
 Buffer config isn't it limit, it's a trigger point... correct the wording here... misleading for the reader
