@@ -469,16 +469,12 @@ TODO: Could leave blank parts in the table to denote hierarchy... might be easie
 | FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
 | FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names.  Log files are named (or postfixed if the prefix is defined) with the day of the logs in YYYMMDD format, and have a '.log' extension. |
 | ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess. TODO link to error handling |
-| ErrorHandling.OverrideInternalServerErrors | No | 'true' or 'false' | Whether unexpected internal error messages are hidden/overridden in JSON error responses returned by ApplicationAccess.  A value of 'false' returns the error message unaltered.  A value of 'true' replaces the actual error message with a fixed error message defined in configuration parameter 'InternalServerErrorMessageOverride'. TODO link to error handling |
-| ErrorHandling.InternalServerErrorMessageOverride | No |  | When configuration parameter 'OverrideInternalServerErrors' is set true, the message to override any unexpected internal error messages with. TODO link to error handling | 
 
 #### Troubleshooting
 **'Value for parameter 'encodedJsonConfiguration' could not be decoded' when starting ApplicationAccess**
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
-'OverrideInternalServerErrors' and 'InternalServerErrorMessageOverride'... do I need to include in config reference
-  TEST what happens if I leave them out of config... with both values of 'IncludeInnerExceptions'
 Maybe mark all 'required' 'Yes' values for metrics logging with a * or similar, and have a caveat/footnote at the bottom
 Maybe as 'step by step' section
 Buffer config isn't it limit, it's a trigger point... correct the wording here... misleading for the reader
