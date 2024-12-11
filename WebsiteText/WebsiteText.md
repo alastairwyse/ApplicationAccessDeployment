@@ -468,7 +468,8 @@ TODO: Could leave blank parts in the table to denote hierarchy... might be easie
 | Cors.AllowedOrigins | No |  | A list (JSON array of strings) of [CORS origins](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (domain, scheme, port) which ApplicationAccess should return in the 'Access-Control-Allow-Origin' header of any HTTP responses |
 | FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
 | FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names.  Log files are named (or postfixed if the prefix is defined) with the day of the logs in YYYMMDD format, and have a '.log' extension. |
-| ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess. TODO link to error handling |
+| ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess.  Defaults to 'false'.  TODO link to error handling |
+| Logging.Console.DisableColors | No | 'true' or 'false' | Whether to disable the use of ANSI colour codes in logs written to stdout.  Defaults to 'false'.  TODO: Link to logging |
 
 #### Troubleshooting
 **'Value for parameter 'encodedJsonConfiguration' could not be decoded' when starting ApplicationAccess**
