@@ -424,8 +424,6 @@ If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernet
 
 The table below describes the contents of the ApplicationAccess JSON configuration file...
 
-TODO: Possible note about optionality of granular DB params vs connection string
-TODO: Something about dummy metrics values being required
 TODO: Could leave blank parts in the table to denote hierarchy... might be easier to read
 
 | JSON Path | Required? | Possible Values | Description |
@@ -447,37 +445,46 @@ TODO: Could leave blank parts in the table to denote hierarchy... might be easie
 | EventBufferFlushing.FlushLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the buffer to the database. |
 | EventPersistence.EventPersisterBackupFilePath | No |  | An optional full path to a file to use to backup the buffer contents, in the case of a failure to write to the database. |
 | MetricLogging.MetricLoggingEnabled | Yes | 'true' or 'false' | Whether to log metrics |
-| MetricLogging.MetricCategorySuffix | Yes | Blank string or suffix | An optional suffix to concatenate to the category used to log metrics under.  E.g. If multiple ApplicationAccess instances wrote metrics to the same database, this suffix could be used to differentiate the metrics for each instance.  JSON property must be specified, but value can be a blank string. |
-| MetricLogging.MetricBufferProcessing.BufferProcessingStrategy | Yes | 'SizeLimitedBufferProcessor', 'LoopingWorkerThreadBufferProcessor', or 'SizeLimitedLoopingWorkerThreadHybridBufferProcessor' | The [metrics buffer processing strategy](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy) to use |
-| MetricLogging.MetricBufferProcessing.BufferSizeLimit | Yes | 1 - 2147483647 | The number of metric events to store in the buffer before triggering a write to storage. |
-| MetricLogging.MetricBufferProcessing.DequeueOperationLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the metric buffer to storage. |
-| MetricLogging.MetricBufferProcessing.BufferProcessingFailureAction | Yes | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. due to a failure to write to the database). TODO link to detailed doco |
-| MetricLogging.MetricsSqlDatabaseConnection.DatabaseType | Yes | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to for metric logging |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance used for metric logging | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Password | Yes |  | The password to use to connect | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a metrics database operation should be retried if a transient error is encountered. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance used for metric logging |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' | The name of the database to connect to within the PostgreSQL instance |  |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| MetricLogging.MetricCategorySuffix | Yes* | Blank string or suffix | An optional suffix to concatenate to the category used to log metrics under.  E.g. If multiple ApplicationAccess instances wrote metrics to the same database, this suffix could be used to differentiate the metrics for each instance.  JSON property must be specified, but value can be a blank string. |
+| MetricLogging.MetricBufferProcessing.BufferProcessingStrategy | Yes* | 'SizeLimitedBufferProcessor', 'LoopingWorkerThreadBufferProcessor', or 'SizeLimitedLoopingWorkerThreadHybridBufferProcessor' | The [metrics buffer processing strategy](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy) to use |
+| MetricLogging.MetricBufferProcessing.BufferSizeLimit | Yes* | 1 - 2147483647 | The number of metric events to store in the buffer before triggering a write to storage. |
+| MetricLogging.MetricBufferProcessing.DequeueOperationLoopInterval | Yes* | 1 - 2147483647 | The time (in milliseconds) between writes of the metric buffer to storage. |
+| MetricLogging.MetricBufferProcessing.BufferProcessingFailureAction | Yes* | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. due to a failure to write to the database). TODO link to detailed doco |
+| MetricLogging.MetricsSqlDatabaseConnection.DatabaseType | Yes* | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to for metric logging |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer'* |  | The hostname or IP address of the SQL Server instance used for metric logging | 
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer'* |  | The name of the database to connect to within the SQL Server instance | 
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer'* |  | The user id to use to connect | 
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Password | Yes* |  | The password to use to connect | 
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified* |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer'* | 0 - 59 | The number of times a metrics database operation should be retried if a transient error is encountered. |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer'* | 0 - 120 | The time to wait (in seconds) between retries. |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer'* | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL'* |  | The hostname or IP address of the PostgreSQL instance used for metric logging |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL'* | The name of the database to connect to within the PostgreSQL instance |  |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL'* |  | The user id to use to connect |
+| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL'* | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
 | Cors.AllowedOrigins | No |  | A list (JSON array of strings) of [CORS origins](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (domain, scheme, port) which ApplicationAccess should return in the 'Access-Control-Allow-Origin' header of any HTTP responses |
 | FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
 | FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names.  Log files are named (or postfixed if the prefix is defined) with the day of the logs in YYYMMDD format, and have a '.log' extension. |
 | ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess.  Defaults to 'false'.  TODO link to error handling |
 | Logging.Console.DisableColors | No | 'true' or 'false' | Whether to disable the use of ANSI colour codes in logs written to stdout.  Defaults to 'false'.  TODO: Link to logging |
 
+* **Note** that the parameters in the 'MetricLogging' section of the JSON configuration must be provided even if the 'MetricLoggingEnabled' parameter is set to 'false'.  See the 'JSON Configuration Example' section for examples of minimal configuration with metric logging disabled (TODO links to these sections).
+
+#### Client Libraries
+Client libraries for ApplicationAccess are available via the following package managers and locations...
+
+| Language | Package Manager | URL |
+| -------- | --------------- | --- |
+| C# | NuGet |  |
+| Java | Maven |  |
+| Python | PyPI |  |
+
 #### Troubleshooting
 **'Value for parameter 'encodedJsonConfiguration' could not be decoded' when starting ApplicationAccess**
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
-Maybe mark all 'required' 'Yes' values for metrics logging with a * or similar, and have a caveat/footnote at the bottom
 Maybe as 'step by step' section
-Buffer config isn't it limit, it's a trigger point... correct the wording here... misleading for the reader
 Step by step user setup from github repo front page
 Info about Java, Python clients
