@@ -4,7 +4,7 @@ Building authorization into a software application can be time-consuming and ted
 ApplicationAccess is a fast, robust, and simple containerized, REST-based web application, providing a complete solution to authorization and permission management.
 
 #### Simple
-The ApplicationAccess data model avoids abstract and unnecessarily complex concepts like Principals, Claims, Subjects, etc... instead providing a simple and easy to inderstand interface and process.  You setup users and groups, and mappings to the elements you want those users and groups to have access to.  Then at runtime your application calls methods to answer simple questions like 'can user A access element X?', or 'which elements can user A access'.
+The ApplicationAccess data model avoids abstract and unnecessarily complex concepts like Principals, Claims, Subjects, etc... instead providing a simple and easy to understand interface and process.  You setup users and groups, and mappings to the elements you want those users and groups to have access to.  Then at runtime your application calls methods to answer simple questions like 'can user A access element X?', or 'which elements can user A access'.
 
 #### Fast
 The ApplicationAccess data model is stored in memory with changes to the database performed via a downstream process.  Hence queries can be serviced quickly without the overhead of backend disk, network, and service dependencies.  Query response time is typically sub-millisecond (excluding network latency).  ApplicationAccess preovides all the performance benefit of caching permissions locally without the drawbacks and risks of permission data becoming stale.
@@ -13,6 +13,7 @@ ApplicationAccess provides the performance benefits of local caching of permissi
 
 #### Robust / Resilient
 ApplicationAccess implements multiple techniques to ensure robust and reliable operation...
+* Thorough and detailed error handling and reporting
 * Database Retries - When connected to Microsoft SQL Server, ApplicationAccess will retry when it encounters transient errors (e.g. network connection errors, database offline, etc...).  The number of retries and duration between retries is configurable.
 * File Backup - In the case that writing to the database fails, ApplicationAccess can write any uncommitted events to the file system.  These events will be written to the database when ApplicationAccess is restarted.
 * Configurable Behaviour - Behaviour in the case of serious but non-critical error is configurable.  For example if logging of metrics fails, ApplicationAccess can be configured to stop metric logging and continue running, or enter a 'fault state' and return a system error when receiving future queries.
@@ -173,7 +174,7 @@ If writing of metrics to the database fails, ApplicationAccess can be configured
 | Parameter Value | Behaviour |
 | --------------- | --------- |
 | ReturnServiceUnavailable | ApplicationAccess will enter a 'fault state', and return an HTTP 500 status in response to any further operations.  The metrics database error would need to be resolved, and ApplicationAccess restarted in order to rectify the issue. |
-| DisableMetricLogging | Disable further logging of mertrics, but continue to respond to operations as normal.  Whilst option this stops further attempts to write metrics to the database, metrics will still be buffered and will consume memory. The metrics database error would need to be resolved, and ApplicationAccess restarted in order to return to normal operation. |
+| DisableMetricLogging | Disable further logging of mertrics, but continue to respond to operations as normal.  Whilst this option stops further attempts to write metrics to the database, metrics will still be buffered and will consume memory. The metrics database error would need to be resolved, and ApplicationAccess restarted in order to return to normal operation. |
 
 **Note** that if 'DisableMetricLogging' option is used, once a failure to write metrics has occurred, metrics will accumulate in the buffers which will eventually lead to out of memory errors.  When such a failure occurs, the following message will be logged (TODO link to logging section)...
 
@@ -181,7 +182,7 @@ If writing of metrics to the database fails, ApplicationAccess can be configured
 Metric logging has been disabled due to an unrecoverable error whilst processing the metrics buffer(s).
 ```
 
-The logs should be monitored for such a message, and if encountered the database error should be resolved and ApplicationAccess restarted. 
+The logs should be monitored for such a message, and if encountered the metrics database error should be resolved and ApplicationAccess restarted. 
 
 ##### CORS
 ApplicationAccess allows configuring valid [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) origins via the optional 'Cors' section of the JSON configuration.  For example...
@@ -488,3 +489,8 @@ TODO:
 Maybe as 'step by step' section
 Step by step user setup from github repo front page
 Info about Java, Python clients
+List of known issues like postgres deadlocks
+  This only happens in 3 node and larger setups... not single node.  Can omit from doco for now, but may need to add later.
+  Similar for SQL server deadlock avoidance... not an issue for the basic version
+Coming soon features??
+Do I want to mention RBAC (https://en.wikipedia.org/wiki/Role-based_access_control)

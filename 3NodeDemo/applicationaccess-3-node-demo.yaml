@@ -136,7 +136,7 @@ spec:
           requests:
             cpu: 250m
             memory: 120Mi
-      # InitContainer to create the ApplicationAccess database and objects in SQL Server
+      # InitContainer to wait for the EventCache pod to start
       initContainers:
       - name: wait-for-eventcache
         image: alpine:latest
@@ -181,7 +181,7 @@ spec:
           requests:
             cpu: 250m
             memory: 120Mi
-      # InitContainer to create the ApplicationAccess database and objects in SQL Server
+      # InitContainer to wait for the EventCache pod to start
       initContainers:
       - name: wait-for-eventcache
         image: alpine:latest
