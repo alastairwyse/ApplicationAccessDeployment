@@ -494,3 +494,7 @@ List of known issues like postgres deadlocks
   Similar for SQL server deadlock avoidance... not an issue for the basic version
 Coming soon features??
 Do I want to mention RBAC (https://en.wikipedia.org/wiki/Role-based_access_control)
+Features of paid versions
+  Scale readers
+  Sharding of databases
+  Split shards and increase capacity while appaccess stays fully available
