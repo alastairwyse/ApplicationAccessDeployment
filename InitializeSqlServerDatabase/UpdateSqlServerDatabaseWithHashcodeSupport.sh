@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright 2024 Alastair Wyse (https://github.com/alastairwyse/ApplicationAccessDeployment/)
+# Copyright 2025 Alastair Wyse (https://github.com/alastairwyse/ApplicationAccessDeployment/)
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
 
 # ------------------------------------------------------------------------------
 #
-# Script: InitializeSqlServerDatabase.sh
-# Description: Creates the default ApplicationAccess database and objects in a 
-#   SQL Server instance.
+# Script: UpdateSqlServerDatabaseWithHashcodeSupport.sh
+# Description: Updates an ApplicationAccess database to include support for 
+#   event extraction, and storing the hashcode of key elements.
 #
 # Platform: Ubuntu Linux 20.04 (focal)
 #
@@ -31,14 +31,14 @@
 #   $4 - The SQL Server password
 #
 # Usage Example:
-#   ./InitializeSqlServerDatabase.sh 127.0.0.1 1433 sa mypassword
+#   ./UpdateSqlServerDatabaseWithHashcodeSupport.sh 127.0.0.1 1433 sa mypassword
 #
 # ------------------------------------------------------------------------------
 
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]
 then
     echo "ERROR: Required parameter not specified."
-    echo "USAGE: InitializeSqlServerDatabase.sh [host/ip] [port] [username] [password]"
+    echo "USAGE: UpdateSqlServerDatabaseWithHashcodeSupport.sh [host/ip] [port] [username] [password]"
     exit 1
 fi
 
@@ -53,8 +53,8 @@ export ACCEPT_EULA=y
 echo "Installing mssql tools..."
 apt-get install -y mssql-tools18 unixodbc-dev
 
-# Retrieve and run the script to create the database objects
-echo "Creating database schema..."
-curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/6facace2d08513d190c746295b6d45140a19e670/ApplicationAccess.Persistence.Sql.SqlServer/Resources/CreateDatabase.sql
+# Retrieve and run the script to update the database objects
+echo "Updating database schema..."
+curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/f5736feba5871b9e4846ba80fa46d64c2831a589/ApplicationAccess.Distribution.Persistence.SqlServer/Resources/ApplicationAccess/UpdateDatabase.sql
 
-/opt/mssql-tools18/bin/sqlcmd -S $1,$2 -U $3 -P $4 -C -i CreateDatabase.sql
+/opt/mssql-tools18/bin/sqlcmd -S $1,$2 -U $3 -P $4 -C -i UpdateDatabase.sql

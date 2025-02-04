@@ -486,6 +486,10 @@ Client libraries for ApplicationAccess are available via the following package m
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
+Wasn't there a section which explained how to download the Kube script to run with containerized Postgres?
+  IF NOT, ADD THIS
+IMPORTANT: NEED TO UPDATE KUBERNETES script below as database create scripts have changed (or will change in the case of postgres)
+  https://github.com/alastairwyse/ApplicationAccessDeployment/blob/master/ReaderWriterLiteDemo/applicationaccess-lite-demo.yaml
 Maybe as 'step by step' section
 Step by step user setup from github repo front page
 Info about Java, Python clients
@@ -498,3 +502,9 @@ Features of paid versions
   Scale readers
   Sharding of databases
   Split shards and increase capacity while appaccess stays fully available
+Upcoming features
+  UI
+  Historic query service
+  CQRS / 3 node... scale readers
+  Shared... scale everything
+  Opentelemetry metrics
