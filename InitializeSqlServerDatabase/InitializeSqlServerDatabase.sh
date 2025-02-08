@@ -55,6 +55,6 @@ apt-get install -y mssql-tools18 unixodbc-dev
 
 # Retrieve and run the script to create the database objects
 echo "Creating database schema..."
-curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/6facace2d08513d190c746295b6d45140a19e670/ApplicationAccess.Persistence.Sql.SqlServer/Resources/CreateDatabase.sql
+curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/4e919203b5fde66ce69293223be9ff1b7faba44e/ApplicationAccess.Distribution.Persistence.SqlServer/Resources/CreateDatabase.sql
 
 /opt/mssql-tools18/bin/sqlcmd -S $1,$2 -U $3 -P $4 -C -i CreateDatabase.sql
