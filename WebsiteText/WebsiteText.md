@@ -60,8 +60,6 @@ The docker image requires setting the following environment variables...
 
 These variables should be set through the -e parameter if running through docker, or the 'containers > env' section of a Kubernetes manifest file.
 
-
-
 ##### Log Levels
 
 The log levels specified in the 'MINIMUM_LOG_LEVEL' variable correspond to the following types of logs...
@@ -71,6 +69,17 @@ The log levels specified in the 'MINIMUM_LOG_LEVEL' variable correspond to the f
 | Information | General information logs including details of each HTTP request received |
 | Warning | Unexpected/anomalous events, e.g. non-fatal exceptions |
 | Critical | Unexpected/anomalous events which prevent the continuing operation of ApplicationAccess |
+
+##### Password Configuration
+
+Secret/sensitive fields can be set as blank in the JSON configuration and ENCODED_JSON_CONFIGURATION variable, and instead passed through environment variables.  This allows the fields to be controlled/set using mechanisms like [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).  This implemented via .NET [non-prefixed environment variables](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#non-prefixed-environment-variables), where the environment variable name is set as the 'path' to the configuration item from the JSON configuration, with the names of the items separated by double underscores.  For example, fields in the JSON configuration which contain database passwords, can be set using the following environment variables...
+
+| Variable Name | 
+| ------------- |
+| AccessManagerSqlDatabaseConnection__ConnectionParameters__Password |
+| AccessManagerSqlDatabaseConnection__ConnectionParameters__ConnectionString | 
+| MetricsSqlDatabaseConnection__ConnectionParameters__Password | 
+| MetricsSqlDatabaseConnection__ConnectionParameters__ConnectionString | 
 
 #### Generating the 'ENCODED_JSON_CONFIGURATION' Variable
 
