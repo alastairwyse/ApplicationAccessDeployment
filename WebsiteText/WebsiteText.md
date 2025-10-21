@@ -1,15 +1,13 @@
 ### Intro
 Building authorization into a software application can be time-consuming and tedious.  Creating authorization components youself can seem easy at first, but the time and effort required quickly adds up when you factor in error handling, data storage, performance tuning, application integration, etc.  But having robust authorization is also a core part of the security and integrity of our application, so can't be neglected.
 
-ApplicationAccess is a fast, robust, and simple containerized, REST-based web application, providing a complete solution to authorization and permission management.
+ApplicationAccess is a fast, robust, and simple containerized, REST-based web application, providing a complete solution to authorization and permission/privilege management.
 
 #### Simple
-The ApplicationAccess data model avoids abstract and unnecessarily complex concepts like Principals, Claims, Subjects, etc... instead providing a simple and easy to understand interface and process.  You setup users and groups, and mappings to the elements you want those users and groups to have access to.  Then at runtime your application calls methods to answer simple questions like 'can user A access element X?', or 'which elements can user A access'.
+The ApplicationAccess data model avoids abstract and unnecessarily complex concepts like Principals, Claims, Subjects, Realms, etc... instead providing a simple and easy to understand interface and process.  You setup users and groups, and mappings to the elements you want those users and groups to have access to.  Then at runtime your application calls methods to answer simple questions like 'can user A access element X?', or 'which elements can user A access'.
 
 #### Fast
-The ApplicationAccess data model is stored in memory with changes to the database performed via a downstream process.  Hence queries can be serviced quickly without the overhead of backend disk, network, and service dependencies.  Query response time is typically sub-millisecond (excluding network latency).  ApplicationAccess preovides all the performance benefit of caching permissions locally without the drawbacks and risks of permission data becoming stale.
-
-ApplicationAccess provides the performance benefits of local caching of permissions, but without the risks associated with cached data becoming stale.
+The ApplicationAccess data model is stored in memory with changes to the database performed via a downstream process.  Hence queries can be serviced quickly without the overhead of backend disk, network, and service dependencies.  Query response time is typically sub-millisecond (excluding network latency). ApplicationAccess provides the performance benefits of local caching of permissions, but without the risks associated with cached data becoming stale.
 
 #### Robust / Resilient
 ApplicationAccess implements multiple techniques to ensure robust and reliable operation...
@@ -27,10 +25,10 @@ ApplicationAccess maintains a complete history of changes to the permissions it 
 ### Terminology
 | Term | Description |
 | ---- | ----------- |
-| User | As the name suggests, a user of the system that ApplicationAccess manages the permissions for. |
+| User | As the name suggests, a user of the system that ApplicationAccess manages the permissions/privileges for. |
 | Group | A collection of users. |
 | Application Components | A component of the system that ApplicationAccess manages the permissions for.  Application components can have access rights/permissions assigned to them.  In a GUI application a component could be a screen within that application. In an Web API application a component could be an endpoint of that API. |
-| Access Levels | A level of access associated with a component.  Examples include 'view', 'modify', 'delete', 'add', etc... |
+| Access Levels | A level of access associated with a component.  Examples could include 'view', 'modify', 'delete', 'add', etc... |
 | Entities and Entity Types | Entities can be any type of data other (aside from application components) that user or group access rights/permissions can be assigned to.  One entity type could be 'clients' of a company which each entity being one of those clients.  Assigning rights/permissions to an entity would mean a user or group could access data regarding that client in the system.  Another entity type could be 'ProductLines' of a company, with each entity being a product line.  The naming is deliberately generic to allow entities to be used flexibly. |
 | Elements | A general collective term for users, groups, application components, access levels, entity types, and entities. |
 | Mapping | A general term for a relationship between elements.  For example, a 'user to group mapping' represents a user being a member of a group.  A 'group to entity mapping' would represent a group having access to an entity. |
@@ -72,14 +70,14 @@ The log levels specified in the 'MINIMUM_LOG_LEVEL' variable correspond to the f
 
 ##### Password Configuration
 
-Secret/sensitive fields can be set as blank in the JSON configuration and ENCODED_JSON_CONFIGURATION variable, and instead passed through environment variables.  This allows the fields to be controlled/set using mechanisms like [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/).  This implemented via .NET [non-prefixed environment variables](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#non-prefixed-environment-variables), where the environment variable name is set as the 'path' to the configuration item from the JSON configuration, with the names of the items separated by double underscores.  For example, fields in the JSON configuration which contain database passwords, can be set using the following environment variables...
+Secret/sensitive configuration fields can be set as blank in the JSON configuration and ENCODED_JSON_CONFIGURATION variable, and instead passed through environment variables.  This allows the fields to be controlled/set using mechanisms like [Kubernetes secrets](https://kubernetes.io/docs/concepts/configuration/secret/), rather than having to define them inside the ENCODED_JSON_CONFIGURATION variable.  This implemented via .NET [non-prefixed environment variables](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-8.0#non-prefixed-environment-variables), where the environment variable name is set as the 'path' to the configuration item in the JSON configuration, with the names of the items separated by double underscores.  For example, fields in the JSON configuration which contain database passwords, can be set using the following environment variables...
 
 | Variable Name | 
 | ------------- |
-| AccessManagerSqlDatabaseConnection__ConnectionParameters__Password |
-| AccessManagerSqlDatabaseConnection__ConnectionParameters__ConnectionString | 
-| MetricsSqlDatabaseConnection__ConnectionParameters__Password | 
-| MetricsSqlDatabaseConnection__ConnectionParameters__ConnectionString | 
+| DatabaseConnection__SqlDatabaseConnection__ConnectionParameters__Password |
+| DatabaseConnection__SqlDatabaseConnection__ConnectionParameters__ConnectionString | 
+| SqlDatabaseConnection__ConnectionParameters__Password | 
+| SqlDatabaseConnection__ConnectionParameters__ConnectionString | 
 
 #### Generating the 'ENCODED_JSON_CONFIGURATION' Variable
 
@@ -144,7 +142,7 @@ The ApplicationAccess data model is stored in memory, with events which change t
 ... will continuously write all buffered events to the database every 30 seconds, or when the number of buffered events reach 50, whichever occurs first.
 
 ##### Event Buffering Database Retries
-When using SQL Server, ApplicationAccess will retry if it encounters a transient error (database offline, network errors, etc...) when attempting to write buffered events to the database.  The number of retries and interval between (in seconds) them can be configured through these parameters in the 'AccessManagerSqlDatabaseConnection.ConnectionParameters' section of the JSON configuration...
+When using SQL Server, ApplicationAccess will retry if it encounters a transient error (database offline, network errors, etc...) when attempting to write buffered events to the database.  The number of retries and interval between (in seconds) them can be configured through these parameters in the 'DatabaseConnection.SqlDatabaseConnection.ConnectionParameters' section of the JSON configuration...
 
 ```
 "RetryCount": 10,
@@ -165,7 +163,10 @@ ApplicationAccess can be optionally configured to, in the case of database write
 Additionally, the directory part of this path should be mapped to a physical volume in the container host, e.g. via the -v option in Docker, or the 'volumes' option in Kubernetes.  If using this feature in Kubernetes you need to ensure the mapped volume exists beyond the lifetime of the container instance (e.g. using [persistent volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) or similar).
 
 ##### Metrics
-ApplicationAccess can be optionally configured to log detailed metrics on counts of events that occurred, time taken to process operations, state of internal components, etc.  Metric logging is performed via the [ApplicationMetrics framework](https://github.com/alastairwyse/ApplicationMetrics), which can be configured to write the metrics to Microsoft SQL Server or PostgreSQL.  Metrics logging is configured via the 'MetricLogging' section of the JSON configuration.  Similarly to the processing of core events in ApplicationAccess, metrics are buffered and writen to the database periodically.  The 'MetricBufferProcessing' section of the metrics JSON configuration allows specifying the buffer size and frequency that metrics are written to the database.  For example to specify a maximum number of 500 metrics to be buffered, and writes to the database every 30 seconds the following JSON configuration should be used...
+ApplicationAccess can be optionally configured to log detailed metrics on counts of events that occurred, time taken to process operations, state of internal components, etc.  Metric logging is performed via the [ApplicationMetrics framework](https://github.com/alastairwyse/ApplicationMetrics), which can be configured to write the metrics to Microsoft SQL Server, PostgreSQL, or via the OpenTelemetry protocol.  Metrics logging is configured via the 'MetricLogging' section of the JSON configuration.  
+
+##### Metrics Buffer Configuration
+Similarly to the processing of core events in ApplicationAccess, metrics logged to SQL Server or PostgreSQL are buffered and writen to the database periodically.  The 'BufferProcessing' section of the metrics JSON configuration allows specifying the buffer size and frequency that metrics are written to the database.  For example to specify a maximum number of 500 metrics to be buffered, and writes to the database every 30 seconds the following JSON configuration should be used...
 
 ```
 "BufferProcessingStrategy": "SizeLimitedLoopingWorkerThreadHybridBufferProcessor",
@@ -175,10 +176,8 @@ ApplicationAccess can be optionally configured to log detailed metrics on counts
 
 The options available for the 'BufferProcessingStrategy' parameter are detailed in the [ApplicationMetrics documentation](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy).
 
-**Note** that the parameters in the 'MetricBufferProcessing' section of the JSON configuration must be provided even if the 'MetricLoggingEnabled' parameter is set to 'false'.  See the 'JSON Configuration Example' section for examples of minimal configuration with metric logging disabled (TODO links to these sections).
-
 ##### Metrics Failure Handling
-If writing of metrics to the database fails, ApplicationAccess can be configured to bahave as follows via the 'BufferProcessingFailureAction' parameter...
+For metrics written to SQL Server or PostgreSQL, if writing of metrics to the database fails, ApplicationAccess can be configured to bahave as follows via the 'BufferProcessingFailureAction' parameter...
 
 | Parameter Value | Behaviour |
 | --------------- | --------- |
@@ -286,7 +285,7 @@ If ApplicationAccess encounters a critical error (typically failure to write to 
 {
   "error": {
     "code": "ServiceUnavailableException",
-    "message": "The service is unavailable due to an interal error.",
+    "message": "The service is unavailable due to an internal error.",
     "target": "MoveNext"
   }
 }
@@ -295,10 +294,10 @@ If ApplicationAccess encounters a critical error (typically failure to write to 
 ...however full details of the underlying error will be available in the logs (TODO link to logging section).
 
 #### Database Setup
-ApplicationAccess supports Microsoft SQL Server or PostgreSQL as its database.
+ApplicationAccess supports Microsoft SQL Server, PostgreSQL, or MongoDB as its database.
 
 ##### Creating the Database
-Scripts to create the database schema can be downloaded from these locations...
+For SQL Server and PostgreSQL the scripts to create the database schema can be downloaded from these locations...
 
 (TODO Update both scripts to company github)
 
@@ -309,18 +308,19 @@ Scripts to create the database schema can be downloaded from these locations...
 
 By default these scripts create databases named 'ApplicationAccess'.  If required, this name can be changed by updating the scripts, and adjusting the connection configuration accordingly.  Note that in PostgreSQL, the creation of the database and schema objects may need to be executed as separate steps, logging out and back into the database under the 'ApplicationAccess' database context before creating the schema objects.
 
-##### Database Configuration
-Connection to the database is configured through the 'AccessManagerSqlDatabaseConnection' section of the JSON configuration.  The 'DatabaseType' parameter should be set to 'SqlServer' or 'PostgreSQL' depending on the platform used.  Then the connection settings are specified in the 'ConnectionParameters' section.  This section can be configured either by specifying values for the specific connection parameters ('DataSource', 'InitialCatalog', 'Host', 'Database', etc... parameter names vary depnding on the platform), or by specifying a single 'ConnectionString' parameter.  In addition values are required for timeout and retry-specific parameters ('CommandTimeout', 'RetryCount', 'RetryInterval', and 'OperationTimeout', depending on the platform).  See the 'JSON Configuration Example' and 'JSON Configuration Reference' section for examples of database configuration (TODO links to these sections).
+##### SQL Database Configuration
+Connection to SQL databases is configured through the 'DatabaseConnection.SqlDatabaseConnection' section of the JSON configuration.  The 'DatabaseType' parameter should be set to 'SqlServer' or 'PostgreSQL' depending on the platform used.  Then the connection settings are specified in the 'ConnectionParameters' section.  This section can be configured either by specifying values for the specific connection parameters ('DataSource', 'InitialCatalog', 'Host', 'Database', etc... parameter names vary depnding on the platform), or by specifying a single 'ConnectionString' parameter.  In addition values are required for timeout and retry-specific parameters ('CommandTimeout', 'RetryCount', 'RetryInterval', and 'OperationTimeout', depending on the platform).  See the 'JSON Configuration Example' and 'JSON Configuration Reference' section for examples of database configuration (TODO links to these sections).
+
+##### MongoDB Database Configuration
+Connection to a MongoDB database is configured through the 'DatabaseConnection.MongoDbDatabaseConnection' section of the JSON configuration.  The connection settings should be specified in the 'ConnectionString' and 'DatabaseName' parameters (the recommended value for the 'DatabaseName' parameter is 'ApplicationAccess').  The 'UseTransactions' parameter sets whether changes to the database involving multiple collections are performed through [transactions](https://www.mongodb.com/docs/manual/core/transactions/).  Using transactions minimizes the risk of the database becoming inconsistent in the case of a transient error or database failure (i.e. mitigates the risk of partial/incomplete changes being written), and hence is recommended.  However transactions require the MongoDB database instance to be configured as a [replica set](https://www.mongodb.com/docs/manual/replication/#std-label-replication).
 
 ##### Metrics Database Configuration
-The connection to the database used for metric logging is configured in the 'MetricsSqlDatabaseConnection' section of the JSON configuration.  Metrics can also be written to SQL Server or PostgreSQL, and the JSON structure of the 'MetricsSqlDatabaseConnection' matches that of the 'AccessManagerSqlDatabaseConnection' section.  Scripts to create the metrics database are available in the relevant ApplicationMetrics 'MetricLogger' projects on Github...
+When using a SQL database for metric logging, the connection to the database is configured in the 'MetricLogging.SqlDatabaseConnection' section of the JSON configuration.  Metrics can be written to SQL Server or PostgreSQL, and the JSON structure of the 'MetricLogging.SqlDatabaseConnection' section matches that of the 'DatabaseConnection.SqlDatabaseConnection' section.  Scripts to create the metrics database are available in the relevant ApplicationMetrics 'MetricLogger' projects on Github...
 
 | Platform | Project Location |
 | -------- | ---------------- |
 | SQL Server | https://github.com/alastairwyse/ApplicationMetrics.MetricLoggers.SqlServer | 
 | PostgreSQL | https://github.com/alastairwyse/ApplicationMetrics.MetricLoggers.PostgreSql |
-
-**Note** that the parameters in the 'MetricsSqlDatabaseConnection' section of the JSON configuration must be provided even if the 'MetricLoggingEnabled' parameter is set to 'false'.  See the 'JSON Configuration Example' section for examples of minimal configuration with metric logging disabled (TODO links to these sections).
 
 ##### Database Licensing
 Microsoft SQL Server requires a license for non-development use.  Please ensure you use it within the terms of the license.
@@ -328,22 +328,24 @@ Microsoft SQL Server requires a license for non-development use.  Please ensure 
 #### Kubernetes Setup
 If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernetes configuration is observed...
 
-**Pod Replicas** - An ApplicationAccess instance requires exclusive access to its database.  Hence the 'replicas' configuration in the ApplicationAccess pod must be set to 1.
-**Container Lifecycle Hooks** - On shutdown ApplicationAccess writes any buffered events to the database.  In the case that the buffers hold a large number of events (e.g. in the case of a 'flood' of events which exceed the database's write throughput), it could take some time to write these events to the database.  Hence it's recommeded to set the 'terminationGracePeriodSeconds' parameter to a sufficiently high value to allow these events to be processed and prevent loss of data (e.g. 3600 seconds = 1 hour).  This will prevent Kubernetes from killing the ApplicationAccess instance before processing of the buffer has completed.  The ApplicationAccess instance will terminate gracefully once the buffered events have been written to the database.
-**Liveness, Readiness and Startup Probes** - ApplicationAccess exposes a health/status API endpoint (TODO link to doco on that), however this endpoint is not available (i.e. will not respond) whilst buffered events are written to the database during shutdown.  Be wary of this if using the health/status endpoint in Kubernetes liveness, readiness or startup probes... e.g. if the health/status endpoint is used for the Liveness probe, the endpoint would not respond whilst writing a large number of buffered events during a graceful shutdown, which could result in an unintended forced restart (and potential loss of the buffered events).
+**Pod Replicas** - An ApplicationAccess instance requires exclusive access to its database.  Hence the 'replicas' configuration in the ApplicationAccess pod must not exceed 1.  
+**Container Lifecycle Hooks** - On shutdown ApplicationAccess writes any buffered events to the database.  In the case that the buffers hold a large number of events (e.g. in the case of a 'flood' of events which exceed the database's write throughput), it could take some time to write these events to the database.  Hence it's recommeded to set the 'terminationGracePeriodSeconds' parameter to a sufficiently high value to allow these events to be processed and prevent loss of data (e.g. 3600 seconds = 1 hour).  This will prevent Kubernetes from killing the ApplicationAccess instance before processing of the buffer has completed.  The ApplicationAccess instance will terminate gracefully once the buffered events have been written to the database.  
+**Liveness, Readiness and Startup Probes** - ApplicationAccess exposes a health/status API endpoint (TODO link to doco on that), however this endpoint is not available (i.e. will not respond) whilst buffered events are written to the database during shutdown.  Be wary of this if using the health/status endpoint in Kubernetes liveness, readiness or startup probes... e.g. if the health/status endpoint is used for the Liveness probe, the endpoint would not respond whilst writing a large number of buffered events during a graceful shutdown, which could result in an unintended forced restart (and potential loss of the buffered events).  
 
 #### Minimal JSON Configuration Example
 
 ```
 {
-  "AccessManagerSqlDatabaseConnection": {
-    "DatabaseType": "PostgreSQL",
-    "ConnectionParameters": {
-      "Host": "127.0.0.1",
-      "Database": "ApplicationAccess",
-      "Username": "postgres-user",
-      "Password": "postgres-password",
-      "CommandTimeout": 0
+  "DatabaseConnection": {
+    "SqlDatabaseConnection": {
+      "DatabaseType": "PostgreSQL",
+      "ConnectionParameters": {
+        "Host": "127.0.0.1",
+        "Database": "ApplicationAccess",
+        "Username": "postgres-user",
+        "Password": "postgres-password",
+        "CommandTimeout": 0
+      }
     }
   },
   "EventBufferFlushing": {
@@ -351,21 +353,7 @@ If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernet
     "FlushLoopInterval": 30000
   },
   "MetricLogging": {
-    "MetricLoggingEnabled": false,
-    "MetricCategorySuffix": "",
-    "MetricBufferProcessing": {
-      "BufferProcessingStrategy": "SizeLimitedLoopingWorkerThreadHybridBufferProcessor",
-      "BufferSizeLimit": 500,
-      "DequeueOperationLoopInterval": 30000,
-      "BufferProcessingFailureAction": "ReturnServiceUnavailable"
-    },
-    "MetricsSqlDatabaseConnection": {
-      "DatabaseType": "PostgreSQL",
-      "ConnectionParameters": {
-        "ConnectionString": "-",
-        "CommandTimeout": 0
-      }
-    }
+    "Enabled": false
   }
 }
 ```
@@ -373,17 +361,18 @@ If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernet
 #### Full JSON Configuration Example
 
 ```
-{
-  "AccessManagerSqlDatabaseConnection": {
-    "DatabaseType": "SqlServer",
-    "ConnectionParameters": {
-      "DataSource": "127.0.0.1",
-      "InitialCatalog": "ApplicationAccess",
-      "UserId": "sqlserver-user",
-      "Password": "sqlserver-password",
-      "RetryCount": 10,
-      "RetryInterval": 20,
-      "OperationTimeout": 0
+{ "DatabaseConnection": {
+    "SqlDatabaseConnection": {
+      "DatabaseType": "SqlServer",
+      "ConnectionParameters": {
+        "DataSource": "127.0.0.1",
+        "InitialCatalog": "ApplicationAccess",
+        "UserId": "sqlserver-user",
+        "Password": "sqlserver-password",
+        "RetryCount": 10,
+        "RetryInterval": 20,
+        "OperationTimeout": 0
+      }
     }
   },
   "EventBufferFlushing": {
@@ -394,15 +383,15 @@ If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernet
     "EventPersisterBackupFilePath": "/ext/ApplicationAccessEventBackup.json"
   },
   "MetricLogging": {
-    "MetricLoggingEnabled": true,
+    "Enabled": true,
     "MetricCategorySuffix": "",
-    "MetricBufferProcessing": {
+    "BufferProcessing": {
       "BufferProcessingStrategy": "SizeLimitedLoopingWorkerThreadHybridBufferProcessor",
       "BufferSizeLimit": 500,
       "DequeueOperationLoopInterval": 30000,
       "BufferProcessingFailureAction": "ReturnServiceUnavailable"
     },
-    "MetricsSqlDatabaseConnection": {
+    "SqlDatabaseConnection": {
       "DatabaseType": "SqlServer",
       "ConnectionParameters": {
         "ConnectionString": "Server=127.0.0.1;Database=ApplicationMetrics;User Id=metrics-user;Password=metrics-password;Encrypt=false;Authentication=SqlPassword",
@@ -430,6 +419,67 @@ If hosting ApplicationAccess in Kubernetes, please ensure the following Kubernet
 }
 ```
 
+#### JSON Configuration Example Logging Metrics via OpenTelemetry
+```
+{
+  "DatabaseConnection": {
+    "SqlDatabaseConnection": {
+      "DatabaseType": "SqlServer",
+      "ConnectionParameters": {
+        "DataSource": "127.0.0.1",
+        "InitialCatalog": "ApplicationAccess",
+        "UserId": "sqlserver-user",
+        "Password": "sqlserver-password",
+        "RetryCount": 10,
+        "RetryInterval": 20,
+        "OperationTimeout": 0
+      }
+    }
+  },
+  "EventBufferFlushing": {
+    "BufferSizeLimit": 50,
+    "FlushLoopInterval": 30000
+  },
+  "EventPersistence": {
+    "EventPersisterBackupFilePath": "/ext/ApplicationAccessEventBackup.json"
+  },
+  "MetricLogging": {
+    "Enabled": true,
+    "MetricCategorySuffix": "",
+    "OpenTelemetryConnection": {
+        "Protocol": "HttpProtobuf", 
+        "Endpoint": "http://127.0.0.1:4318/v1/metrics", 
+        "Timeout": 10000, 
+        "Headers": "", 
+        "ExporterTimeout": 10000, 
+        "MaxExportBatchSize": 100, 
+        "MaxQueueSize": 2000, 
+        "ScheduledDelay": 10000
+    }
+  }
+}
+```
+
+#### JSON Configuration Example with MongoDB Database
+```
+{
+  "DatabaseConnection": {
+    "MongoDbDatabaseConnection": {
+      "ConnectionString": "mongodb://127.0.0.1:27017/?replicaSet=myReplicaSet",
+      "DatabaseName": "ApplicationAccess",
+      "UseTransactions": true
+    }
+  },
+  "EventBufferFlushing": {
+    "BufferSizeLimit": 50,
+    "FlushLoopInterval": 30000
+  },
+  "MetricLogging": {
+    "Enabled": false
+  }
+}
+```
+
 #### JSON Configuration Reference
 
 The table below describes the contents of the ApplicationAccess JSON configuration file...
@@ -438,48 +488,57 @@ TODO: Could leave blank parts in the table to denote hierarchy... might be easie
 
 | JSON Path | Required? | Possible Values | Description |
 | --------- | --------- | --------------- | ----------- |
-| AccessManagerSqlDatabaseConnection.DatabaseType | Yes | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should use |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.Password | Yes |  | The password to use to connect | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a database operation should be retried if a transient error is encountered. |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' |  | The name of the database to connect to within the PostgreSQL instance |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
-| AccessManagerSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| DatabaseConnection.SqlDatabaseConnection.DatabaseType | When using a SQL database | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should use |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance | 
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.Password | Yes |  | The password to use to connect | 
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a database operation should be retried if a transient error is encountered. |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' |  | The name of the database to connect to within the PostgreSQL instance |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
+| DatabaseConnection.SqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| DatabaseConnection.MongoDbDatabaseConnection.ConnectionString | When using MongoDB |  | The connection string to use to connect |
+| DatabaseConnection.MongoDbDatabaseConnection.DatabaseName | When using MongoDB | Any, but recommended to use 'ApplicationAccess' | The name of the database to connect to within the MongoDB instance |
+| DatabaseConnection.MongoDbDatabaseConnection.UseTransactions | When using MongoDB | 'true' or 'false' | Whether to use MongoDB transactions (TODO link to 'MongoDB Database Configuration' section) |
 | EventBufferFlushing.BufferSizeLimit | Yes | 1 - 2147483647 | The number of events to store in the buffer before triggering a write to the database. | 
 | EventBufferFlushing.FlushLoopInterval | Yes | 1 - 2147483647 | The time (in milliseconds) between writes of the buffer to the database. |
 | EventPersistence.EventPersisterBackupFilePath | No |  | An optional full path to a file to use to backup the buffer contents, in the case of a failure to write to the database. |
-| MetricLogging.MetricLoggingEnabled | Yes | 'true' or 'false' | Whether to log metrics |
-| MetricLogging.MetricCategorySuffix | Yes* | Blank string or suffix | An optional suffix to concatenate to the category used to log metrics under.  E.g. If multiple ApplicationAccess instances wrote metrics to the same database, this suffix could be used to differentiate the metrics for each instance.  JSON property must be specified, but value can be a blank string. |
-| MetricLogging.MetricBufferProcessing.BufferProcessingStrategy | Yes* | 'SizeLimitedBufferProcessor', 'LoopingWorkerThreadBufferProcessor', or 'SizeLimitedLoopingWorkerThreadHybridBufferProcessor' | The [metrics buffer processing strategy](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy) to use |
-| MetricLogging.MetricBufferProcessing.BufferSizeLimit | Yes* | 1 - 2147483647 | The number of metric events to store in the buffer before triggering a write to storage. |
-| MetricLogging.MetricBufferProcessing.DequeueOperationLoopInterval | Yes* | 1 - 2147483647 | The time (in milliseconds) between writes of the metric buffer to storage. |
-| MetricLogging.MetricBufferProcessing.BufferProcessingFailureAction | Yes* | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. due to a failure to write to the database). TODO link to detailed doco |
-| MetricLogging.MetricsSqlDatabaseConnection.DatabaseType | Yes* | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to for metric logging |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer'* |  | The hostname or IP address of the SQL Server instance used for metric logging | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer'* |  | The name of the database to connect to within the SQL Server instance | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer'* |  | The user id to use to connect | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Password | Yes* |  | The password to use to connect | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified* |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer'* | 0 - 59 | The number of times a metrics database operation should be retried if a transient error is encountered. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer'* | 0 - 120 | The time to wait (in seconds) between retries. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer'* | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL'* |  | The hostname or IP address of the PostgreSQL instance used for metric logging |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL'* | The name of the database to connect to within the PostgreSQL instance |  |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL'* |  | The user id to use to connect |
-| MetricLogging.MetricsSqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL'* | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| MetricLogging.Enabled | Yes | 'true' or 'false' | Whether to log metrics |
+| MetricLogging.MetricCategorySuffix | No | Blank string or suffix | An optional suffix to concatenate to the category used to log metrics under.  E.g. If multiple ApplicationAccess instances wrote metrics to the same database, this suffix could be used to differentiate the metrics for each instance.  JSON property must be specified, but value can be a blank string. |
+| MetricLogging.BufferProcessing.BufferProcessingStrategy | When SqlServer or PostgreSQL metric logging is enabled| 'SizeLimitedBufferProcessor', 'LoopingWorkerThreadBufferProcessor', or 'SizeLimitedLoopingWorkerThreadHybridBufferProcessor' | The [metrics buffer processing strategy](https://github.com/alastairwyse/ApplicationMetrics?tab=readme-ov-file#3-choosing-a-buffer-processing-strategy) to use |
+| MetricLogging.BufferProcessing.BufferSizeLimit | When SqlServer or PostgreSQL metric logging is enabled | 1 - 2147483647 | The number of metric events to store in the buffer before triggering a write to storage. |
+| MetricLogging.BufferProcessing.DequeueOperationLoopInterval | When SqlServer or PostgreSQL metric logging is enabled | 1 - 2147483647 | The time (in milliseconds) between writes of the metric buffer to storage. |
+| MetricLogging.BufferProcessing.BufferProcessingFailureAction | When SqlServer or PostgreSQL metric logging is enabled | 'ReturnServiceUnavailable' or 'DisableMetricLogging' | The action ApplicationAccess should take when processing of the metric buffer fails (e.g. due to a failure to write to the database). Defaults to 'ReturnServiceUnavailable' if not specified.  TODO link to detailed doco |
+| MetricLogging.SqlDatabaseConnection.DatabaseType | When SqlServer or PostgreSQL metric logging is enabled | 'SqlServer' or 'PostgreSQL' | The type of the database ApplicationAccess should connect to for metric logging |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.DataSource | When DatabaseType='SqlServer' |  | The hostname or IP address of the SQL Server instance used for metric logging | 
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.InitialCatalog | When DatabaseType='SqlServer' |  | The name of the database to connect to within the SQL Server instance | 
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.UserId | When DatabaseType='SqlServer' |  | The user id to use to connect | 
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.Password | When SqlServer or PostgreSQL metric logging is enabled |  | The password to use to connect | 
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.ConnectionString | When detailed connection parameters ('DataSource', 'InitialCatalog', 'Host', etc...) are not specified |  | The connection string to use to connect.  Can be specified for [SqlServer](https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax) or [PostgreSQL](https://www.npgsql.org/doc/connection-string-parameters.html.) | 
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.RetryCount | When DatabaseType='SqlServer' | 0 - 59 | The number of times a metrics database operation should be retried if a transient error is encountered. |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.RetryInterval | When DatabaseType='SqlServer' | 0 - 120 | The time to wait (in seconds) between retries. |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.OperationTimeout | When DatabaseType='SqlServer' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.Host | When DatabaseType='PostgreSQL' |  | The hostname or IP address of the PostgreSQL instance used for metric logging |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.Database | When DatabaseType='PostgreSQL' | The name of the database to connect to within the PostgreSQL instance |  |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.Username | When DatabaseType='PostgreSQL' |  | The user id to use to connect |
+| MetricLogging.SqlDatabaseConnection.ConnectionParameters.CommandTimeout | When DatabaseType='PostgreSQL' | 0 - 2147483647 | The time to wait (in seconds) before terminating a database operation and generating an error.  A value of 0 will wait indefinitely. |
+| MetricLogging.OpenTelemetryConnection.Protocol | When OpenTelemetry metric logging is enabled | 'HttpProtobuf' or 'Grpc' | The OTLP transport protocol.  See [OTLP Exporter for OpenTelemetry .NET](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#otlpexporteroptions). |
+| MetricLogging.OpenTelemetryConnection.Endpoint | When OpenTelemetry metric logging is enabled |  | The URL to send metrics to via the OpenTelemetry protocol.  See [OTLP Exporter for OpenTelemetry .NET](https://github.com/open-telemetry/opentelemetry-dotnet/blob/main/src/OpenTelemetry.Exporter.OpenTelemetryProtocol/README.md#otlpexporteroptions). |
+| MetricLogging.OpenTelemetryConnection.TimeoutMilliseconds | No |  | The maximum waiting time (in milliseconds) for the backend to process each batch. Defaults to 10000 if not specified. |
+| MetricLogging.OpenTelemetryConnection.Headers | No |  | Optional headers for the connection.  See the [OpenTelemetry Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#specifying-headers-via-environment-variables) for details of the format of the headers. |
+| MetricLogging.OpenTelemetryConnection.ExporterTimeout | No |  | The timeout (in milliseconds) after which the export is cancelled. Defaults to 10000 if not specified. |
+| MetricLogging.OpenTelemetryConnection.MaxExportBatchSize | No |  | The maximum batch size of every export. Must be smaller or equal to 'MaxQueueSize'. Defaults to 512 if not specified. |
+| MetricLogging.OpenTelemetryConnection.MaxQueueSize | No |  | The maximum queue size. The queue drops the data if the maximum size is reached. Defaults to 2048 if not specified. |
+| MetricLogging.OpenTelemetryConnection.ScheduledDelay | No |  | The delay interval (in milliseconds) between two consecutive exports. Defaults to 5000 if not specified. |
 | Cors.AllowedOrigins | No |  | A list (JSON array of strings) of [CORS origins](https://developer.mozilla.org/en-US/docs/Glossary/Origin) (domain, scheme, port) which ApplicationAccess should return in the 'Access-Control-Allow-Origin' header of any HTTP responses |
 | FileLogging.LogFilePath | No |  | The path to optionally write log files to (not including the file name).  This folder should typically be mapped to a physical volume in the container host (e.g. via the -v parameter in docker). |
 | FileLogging.LogFileNamePrefix | No |  | The prefix to include in log files names.  Log files are named (or postfixed if the prefix is defined) with the day of the logs in YYYMMDD format, and have a '.log' extension. |
 | ErrorHandling.IncludeInnerExceptions | No | 'true' or 'false' | Whether additional detail (inner exception information) is included in JSON error responses returned by ApplicationAccess.  Defaults to 'false'.  TODO link to error handling |
 | Logging.Console.DisableColors | No | 'true' or 'false' | Whether to disable the use of ANSI colour codes in logs written to stdout.  Defaults to 'false'.  TODO: Link to logging |
-
-* **Note** that the parameters in the 'MetricLogging' section of the JSON configuration must be provided even if the 'MetricLoggingEnabled' parameter is set to 'false'.  See the 'JSON Configuration Example' section for examples of minimal configuration with metric logging disabled (TODO links to these sections).
 
 #### Client Libraries
 Client libraries for ApplicationAccess are available via the following package managers and locations...
@@ -489,17 +548,24 @@ Client libraries for ApplicationAccess are available via the following package m
 | C# | NuGet |  |
 | Java | Maven |  |
 | Python | PyPI |  |
+| TypeScript | npm |  |
 
 #### Troubleshooting
 **'Value for parameter 'encodedJsonConfiguration' could not be decoded' when starting ApplicationAccess**
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
+Add a 'quickstart' section showing how to run on raw docker with no DB config
+  Then second section which shows Kube demo with Postgres DB
+Add swagger endpoint details
+Add something about OpenTelem to metrics part (##### Metrics Database Configuration)
+Mention 'Privilege Management'
+  Maybe permission/privelege management as the standard term?
 Wasn't there a section which explained how to download the Kube script to run with containerized Postgres?
   IF NOT, ADD THIS
 IMPORTANT: NEED TO UPDATE KUBERNETES script below as database create scripts have changed (or will change in the case of postgres)
   https://github.com/alastairwyse/ApplicationAccessDeployment/blob/master/ReaderWriterLiteDemo/applicationaccess-lite-demo.yaml
-Maybe as 'step by step' section
+Maybe add 'step by step' section
 Step by step user setup from github repo front page
 Info about Java, Python clients
 List of known issues like postgres deadlocks
@@ -517,3 +583,14 @@ Upcoming features
   CQRS / 3 node... scale readers
   Shared... scale everything
   Opentelemetry metrics
+
+PAGES:
+  Frint page with badges
+  Semi details with longer text of fast/ simple etc
+  Detailed config setup and reference
+  Page describing basic setup currently in gitlab… need to adjust tho.. some text assumes enums as app components
+  Contact page
+  Coming soon/ future enhancement
+  Airflow page is nice
+  Badges on couchdb
+  Appaccess.kamispring in url
