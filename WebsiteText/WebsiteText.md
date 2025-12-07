@@ -207,11 +207,12 @@ ApplicationAccess writes logging information to stdout by default.  The level of
 ```
 "FileLogging": {
   "LogFilePath": "/ext",
-  "LogFileNamePrefix": "ApplicationAccessLog"
+  "LogFileNamePrefix": "ApplicationAccessLog",
+  "LogLevel": "Warning"
 }
 ```
 
-Note that the 'LogFilePath' should be a path which is mapped to a physical volume in the docker host, similar to the 'EventPersisterBackupFilePath' configuration (TODO link to that).  Log file sizes are limited to 1GB per calendar day, and logging will stop when 1GB is reached.
+Note that the 'LogFilePath' should be a path which is mapped to a physical volume in the docker host, similar to the 'EventPersisterBackupFilePath' configuration (TODO link to that).  The 'LogLevel' should be set to one of [Serlog's minimum log levels](https://github.com/serilog/serilog/wiki/Configuration-Basics#minimum-level), and will default to 'Warning' if 'LogLevel' is ommitted.  Log file sizes are limited to 1GB per calendar day, and logging will stop when 1GB is reached (as per [Serilog limits](https://github.com/serilog/serilog-sinks-rollingfile?tab=readme-ov-file#limits)).
 
 **Note** that by default, logs written to stdout use ANSI colour codes.  To disable this, add the following section to the JSON configuration...
 
@@ -555,9 +556,16 @@ Client libraries for ApplicationAccess are available via the following package m
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
+Update any ENCODED_JSON_CONFIGURATION samples to ensure they contain the latest version of appsettings config (e.g. recently added stuff like file logging level)
+Recheck appsettings examples in context of new params (e.g. recently added stuff like file logging level)
 Add a 'quickstart' section showing how to run on raw docker with no DB config
+  Command is (need to update )...
+    docker run -it --rm -p 5000:5000 -e MODE=Launch -e LISTEN_PORT=5000 -e MINIMUM_LOG_LEVEL=Warning -e ENCODED_JSON_CONFIGURATION=H4sIAAAAAAACA1TMMQ7CMAwF0BPkDlHnDpUQCyNQJKQwcQK3OMFScFDidqDq3UlCF/74n/0XpbRuziAwQMJTYMZRKHBz0MvaVuxnZDlO1mK8+Ck9iV3RYll/cKcPGnqRZNl37Wb13ITwvrJgnMFn3XU5xbf1G0qk0QTn/nd7hsHjIzcWfML6odT6BQAA//8= (TODO image path)
   Then second section which shows Kube demo with Postgres DB
+Full JSON example doesn't contain all 'ErrorHandling' config NOR logging settings (from plain appsettings)... need to test that both of these can be overridden properly.
+Maybe put things like 'OverrideInternalServerErrors' in an 'advanced configuration' section? (NOT log levels as they're controlled by env variable sent to container)
 Add swagger endpoint details
+Include use as backend for custom permissions system… scalable… 1000s of hours of testing
 Add something about OpenTelem to metrics part (##### Metrics Database Configuration)
 Mention 'Privilege Management'
   Maybe permission/privelege management as the standard term?

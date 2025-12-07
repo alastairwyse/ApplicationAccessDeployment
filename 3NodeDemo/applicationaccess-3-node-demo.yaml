@@ -61,7 +61,7 @@ spec:
       terminationGracePeriodSeconds: 3600
       containers:
       - name: eventcache
-        image: [TODO]
+        image: {EventCache image tag}
         ports:
         - containerPort: 5003
         env:
@@ -120,7 +120,7 @@ spec:
       terminationGracePeriodSeconds: 3600
       containers:
       - name: writer
-        image: [TODO]
+        image: {Writer image tag}
         ports:
         - containerPort: 5002
         env:
@@ -165,7 +165,7 @@ spec:
       terminationGracePeriodSeconds: 3600
       containers:
       - name: reader
-        image: [TODO]
+        image: {Reader image tag}
         ports:
         - containerPort: 5001
         env:

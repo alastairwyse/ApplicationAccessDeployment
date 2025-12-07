@@ -59,7 +59,7 @@ spec:
       terminationGracePeriodSeconds: 3600
       containers:
       - name: applicationaccesslite
-        image: alastairwyse/applicationaccess:20241014-0907
+        image: {ReaderWriterLite image tag}
         ports:
         - containerPort: 5000
         env:

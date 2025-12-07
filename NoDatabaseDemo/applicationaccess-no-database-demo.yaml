@@ -1,0 +1,48 @@
+# ApplicationAccess pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: applicationaccess
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: applicationaccess
+  template:
+    metadata:
+      labels:
+        app: applicationaccess
+    spec:
+      terminationGracePeriodSeconds: 3600
+      containers:
+      - name: applicationaccess
+        image: {ReaderWriter image tag}
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MODE
+          value: "Launch"
+        - name: LISTEN_PORT
+          value: "5000"
+        - name: MINIMUM_LOG_LEVEL
+          value: "Warning"
+        - name: ENCODED_JSON_CONFIGURATION
+          value: "H4sIAAAAAAACA1TMMQ7CMAwF0BPkDlHnDpUQCyNQJKQwcQK3OMFScFDidqDq3UlCF/74n/0XpbRuziAwQMJTYMZRKHBz0MvaVuxnZDlO1mK8+Ck9iV3RYll/cKcPGnqRZNl37Wb13ITwvrJgnMFn3XU5xbf1G0qk0QTn/nd7hsHjIzcWfML6odT6BQAA//8="
+        resources:
+          requests:
+            cpu: 500m
+            memory: 120Mi
+
+---
+# Expose port 5000 publically (and route to the ApplicationAccess pod)
+apiVersion: v1
+kind: Service
+metadata:
+  name: applicationaccess-service
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+  selector:
+    app: applicationaccess
+  type: LoadBalancer
