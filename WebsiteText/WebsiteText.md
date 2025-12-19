@@ -556,6 +556,7 @@ Client libraries for ApplicationAccess are available via the following package m
 This error can occur if the JSON in the 'ENCODED_JSON_CONFIGURATION' environment variable is invalid (e.g. missing comma, quotation, etc...).  Ensure the configuration contains valid JSON.
 
 TODO:
+Possibly remove the section on 'Liveness, Readiness and Startup Probes'... if 'terminationGracePeriodSeconds' is set sufficiently long, it doesn't matter if liveness probe is not responding
 Update any ENCODED_JSON_CONFIGURATION samples to ensure they contain the latest version of appsettings config (e.g. recently added stuff like file logging level)
 Recheck appsettings examples in context of new params (e.g. recently added stuff like file logging level)
 Add a 'quickstart' section showing how to run on raw docker with no DB config
@@ -563,7 +564,10 @@ Add a 'quickstart' section showing how to run on raw docker with no DB config
     docker run -it --rm -p 5000:5000 -e MODE=Launch -e LISTEN_PORT=5000 -e MINIMUM_LOG_LEVEL=Warning -e ENCODED_JSON_CONFIGURATION=H4sIAAAAAAACA1TMMQ7CMAwF0BPkDlHnDpUQCyNQJKQwcQK3OMFScFDidqDq3UlCF/74n/0XpbRuziAwQMJTYMZRKHBz0MvaVuxnZDlO1mK8+Ck9iV3RYll/cKcPGnqRZNl37Wb13ITwvrJgnMFn3XU5xbf1G0qk0QTn/nd7hsHjIzcWfML6odT6BQAA//8= (TODO image path)
   Then second section which shows Kube demo with Postgres DB
 Full JSON example doesn't contain all 'ErrorHandling' config NOR logging settings (from plain appsettings)... need to test that both of these can be overridden properly.
+DB setup config should be clear on how to run SQL Server and postgres script (step by step)... i.e. SQL server in SQLCMD mode, but postgres have to create DB first and then reconnect to run script.
 Maybe put things like 'OverrideInternalServerErrors' in an 'advanced configuration' section? (NOT log levels as they're controlled by env variable sent to container)
+Regarding liveness probe during hosted service shutdown
+  Should I add something saying that the service won't go down randomly... health check will only start reporting failure when something catastrophic and deliberate happens
 Add swagger endpoint details
 Include use as backend for custom permissions system… scalable… 1000s of hours of testing
 Add something about OpenTelem to metrics part (##### Metrics Database Configuration)
