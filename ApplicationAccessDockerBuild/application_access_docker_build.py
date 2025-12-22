@@ -22,10 +22,10 @@
 #     Creates a docker images from a set of ApplicationAccess component tar files and pushes those images to docker hub.
 #
 # SYNTAX
-#     application_access_docker_build.py [tar folder path] [dockerhub namespace] [dockerhub tag]
+#     application_access_docker_build.py [tar folder path] [dockerhub namespace] [dockerhub tag] [push to dockerhub]
 #
 # EXAMPLES
-#     python3 application_access_docker_build.py "/home/user/ApplicationAccessDocker/Tars" "myreponame" "20251219-1411"
+#     python3 application_access_docker_build.py "/home/user/ApplicationAccessDocker/Tars" "myreponame" "20251219-1411" Y
 #
 # NOTES / TODO
 #     Requires that the 'docker' process has been previously connected to and authenticated against a docker repository.
@@ -79,7 +79,7 @@ def get_script_file_name() -> str:
 def print_usage_message() -> None:
     """Prints a 'usage' message to the console."""
     print("USAGE: ")
-    print("  {0} [tar folder path] [dockerhub namespace] [dockerhub tag]".format(get_script_file_name()))
+    print("  {0} [tar folder path] [dockerhub namespace] [dockerhub tag] [push to dockerhub]".format(get_script_file_name()))
     print()
 
 
@@ -102,13 +102,14 @@ def get_docker_image_tag_from_stdout(docker_build_stdout: str) -> str:
 
 def execute_docker_build() -> None:
     # Read parameters from the command line
-    expected_command_line_parameter_count: int = 3
+    expected_command_line_parameter_count: int = 4
     if (len(sys.argv) != expected_command_line_parameter_count + 1):
         print_usage_message()
         raise Exception("Received unexpected number of command line parameters.  Expected {0}, but received {1}.".format(expected_command_line_parameter_count, len(sys.argv) - 1))
     tar_folder_path: str = sys.argv[1]
     dockerhub_namespace: str = sys.argv[2]
     dockerhub_tag: str = sys.argv[3]
+    push_to_dockerhub_string: str = sys.argv[4]
 
     # Validate the command line parameters
     if (os.path.isdir(tar_folder_path) == False):
@@ -126,6 +127,12 @@ def execute_docker_build() -> None:
     if (dockerhub_tag_valid == False):
         print_usage_message()
         raise Exception("Dockerhub tag '{0}' must be specified in format 'YYYYMMDD-HH:MI'.".format(dockerhub_tag))
+    if (not ((push_to_dockerhub_string.lower() == "y") or (push_to_dockerhub_string.lower() == "n"))):
+        print_usage_message()
+        raise Exception("Push to dockerhub parameter '{0}' is invalid.  Valid values are 'y', 'Y', 'n', or 'N'.".format(push_to_dockerhub_string))
+    push_to_dockerhub: bool = True
+    if (push_to_dockerhub_string.lower() == "n"):
+        push_to_dockerhub: bool = False
 
 
     # Delete any subfolders from the tar folder
@@ -160,9 +167,12 @@ def execute_docker_build() -> None:
         docker_image_tag: str = get_docker_image_tag_from_stdout(docker_build_stdout.pop())
         new_tag: str = "{0}/{1}:{2}".format(dockerhub_namespace, current_tar_file_without_extension.lower(), dockerhub_tag)
         command_executor.execute_operating_system_command("docker tag {0} {1}".format(docker_image_tag, new_tag), tar_folder_path)
-        command_executor.execute_operating_system_command("docker push {0}".format(new_tag), tar_folder_path)
-        command_executor.execute_operating_system_command("docker image rm {0}".format(docker_image_tag), tar_folder_path)
-        print("Successfully pushed tag '{0}'.".format(new_tag))
+        if (push_to_dockerhub == True):
+            command_executor.execute_operating_system_command("docker push {0}".format(new_tag), tar_folder_path)
+            command_executor.execute_operating_system_command("docker image rm {0}".format(docker_image_tag), tar_folder_path)
+            print("Successfully pushed tag '{0}'.".format(new_tag))
+        else:
+            print("Successfully built image '{0}'.".format(new_tag))            
 
     print("SUCCESS: Completed Docker build process.")
 
