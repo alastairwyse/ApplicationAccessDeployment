@@ -55,6 +55,6 @@ apt-get install -y mssql-tools18 unixodbc-dev
 
 # Retrieve and run the script to update the database objects
 echo "Updating database schema..."
-curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/f5736feba5871b9e4846ba80fa46d64c2831a589/ApplicationAccess.Distribution.Persistence.SqlServer/Resources/ApplicationAccess/UpdateDatabase.sql
+curl -O https://raw.githubusercontent.com/alastairwyse/ApplicationAccess/refs/heads/main/ApplicationAccess.Distribution.Persistence.SqlServer/Resources/ApplicationAccess/UpdateDatabase.sql
 
 /opt/mssql-tools18/bin/sqlcmd -S $1,$2 -U $3 -P $4 -C -i UpdateDatabase.sql
