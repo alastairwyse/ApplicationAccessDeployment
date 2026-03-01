@@ -126,7 +126,7 @@ def execute_docker_build() -> None:
                 pass
     if (dockerhub_tag_valid == False):
         print_usage_message()
-        raise Exception("Dockerhub tag '{0}' must be specified in format 'YYYYMMDD-HH:MI'.".format(dockerhub_tag))
+        raise Exception("Dockerhub tag '{0}' must be specified in format 'YYYYMMDD-HHMI'.".format(dockerhub_tag))
     if (not ((push_to_dockerhub_string.lower() == "y") or (push_to_dockerhub_string.lower() == "n"))):
         print_usage_message()
         raise Exception("Push to dockerhub parameter '{0}' is invalid.  Valid values are 'y', 'Y', 'n', or 'N'.".format(push_to_dockerhub_string))
